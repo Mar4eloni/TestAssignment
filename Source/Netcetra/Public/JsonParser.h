@@ -117,14 +117,16 @@ public:
 	FVector Item2;
 	FVector Item3;
 
-	FVector2D CenterOfPolygonXY;
-	FVector2D CenterOfPolygonXZ;
 	FVector CenterOfPolygon;
 
-	FVector* ScaleBetweenRefPoints;
+	FVector ScaleBetweenRefPoints;
 
 	FVector NewReferencePoint1;
 	FVector NewReferencePoint2;
+
+	float DistanceItem1ToCenter;
+	float DistanceItem2ToCenter;
+	float DistanceItem3ToCenter;
 
 	FVector DiferenceItem1FromRef1;
 	FVector DiferenceItem2FromRef1;
@@ -158,6 +160,9 @@ public:
 	//(FVector& referencePoint1, FVector& referencePoint2, FVector& item1, FVector& item2, FVector& item3);
 
 	UFUNCTION(BlueprintCallable)
-	FVector2D CalculateCenterOfPolygon(const TArray<FVector2D> verticies, int vertexCount);
+	FVector CalculateCenterOfPolygon(const TArray<FVector> verticies, int vertexCount);
+
+	UFUNCTION(BlueprintCallable)
+	void CalculatePositions(FVector RotationAxis, float Angle);
 
 };

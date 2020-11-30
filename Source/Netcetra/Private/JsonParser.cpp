@@ -5,6 +5,7 @@
 #include "JsonUtilities.h"
 #include "Items/BallPoint.h"
 #include "DrawDebugHelpers.h"
+#include "Math/UnrealMathVectorConstants.h"
 //#include "DataStorageAndCalculation.h"
 //#include "KismetStringLibrary.h"
 
@@ -112,39 +113,34 @@ FVector AJsonParser::CalculateDiference(FVector& ReferencePoint, FVector& ItemPo
 
 void AJsonParser::CalculateDifferences()
 {
-	TArray<FVector2D> verticies = {
-		FVector2D(ReferencePoint1.X,ReferencePoint1.Z),
-		FVector2D(ReferencePoint2.X,ReferencePoint2.Z),
-		FVector2D(Item1.X,Item1.Z),
-		FVector2D(Item2.X,Item2.Z),
-		FVector2D(Item3.X,Item3.Z) };
-	TArray<FVector2D> verticies1 = {
-		FVector2D(ReferencePoint1.X,ReferencePoint1.Y),
-		FVector2D(ReferencePoint2.X,ReferencePoint2.Y),
-		FVector2D(Item1.X,Item1.Y),
-		FVector2D(Item2.X,Item2.Y),
-		FVector2D(Item3.X,Item3.Y) };
+	TArray<FVector> verticies = {
+		ReferencePoint1,
+		ReferencePoint2,
+		Item1,
+		Item2,
+		Item3 };
+	
+	CenterOfPolygon = CalculateCenterOfPolygon(verticies, verticies.Num());
 
-	CenterOfPolygonXZ = CalculateCenterOfPolygon(verticies, 5);
-	CenterOfPolygonXZ.Normalize();
-	CenterOfPolygonXY = CalculateCenterOfPolygon(verticies1, 5);
-	CenterOfPolygonXY.Normalize();
 
-	DiferenceItem1FromRef1.X = CenterOfPolygonXZ.X - Item1.X;
-	DiferenceItem1FromRef1.Y = CenterOfPolygonXY.Y - Item1.Y;
-	DiferenceItem1FromRef1.Z = CenterOfPolygonXZ.Y - Item1.Z;
 
-	DiferenceItem2FromRef1.X = CenterOfPolygonXZ.X - Item2.X;
-	DiferenceItem2FromRef1.Y = CenterOfPolygonXY.Y - Item2.Y;
-	DiferenceItem2FromRef1.Z = CenterOfPolygonXZ.Y - Item2.Z;
+	DistanceItem1ToCenter = FVector::Dist(CenterOfPolygon, Item1);
+	DistanceItem2ToCenter = FVector::Dist(CenterOfPolygon, Item2);
+	DistanceItem3ToCenter = FVector::Dist(CenterOfPolygon, Item3);
+	float DistanceRef1ToCenter = FVector::Dist(CenterOfPolygon, ReferencePoint1);
+	float DistanceRef2ToCenter = FVector::Dist(CenterOfPolygon, ReferencePoint2);
+	/*DiferenceItem1FromRef1.X = CenterOfPolygon.X - Item1.X;
+	DiferenceItem1FromRef1.Y = CenterOfPolygon.Y - Item1.Y;
+	DiferenceItem1FromRef1.Z = CenterOfPolygon.Z - Item1.Z;
 
-	DiferenceItem3FromRef1.X = CenterOfPolygonXZ.X - Item3.X;
-	DiferenceItem3FromRef1.Y = CenterOfPolygonXY.Y - Item3.Y;
-	DiferenceItem3FromRef1.Z = CenterOfPolygonXZ.Y - Item3.Z;
+	DiferenceItem2FromRef1.X = CenterOfPolygon.X - Item2.X;
+	DiferenceItem2FromRef1.Y = CenterOfPolygon.Y - Item2.Y;
+	DiferenceItem2FromRef1.Z = CenterOfPolygon.Z - Item2.Z;
 
-	CenterOfPolygon.X = CenterOfPolygonXZ.X;
-	CenterOfPolygon.Y = CenterOfPolygonXY.Y;
-	CenterOfPolygon.Z = CenterOfPolygonXZ.Y;
+	DiferenceItem3FromRef1.X = CenterOfPolygon.X - Item3.X;
+	DiferenceItem3FromRef1.Y = CenterOfPolygon.Y - Item3.Y;
+	DiferenceItem3FromRef1.Z = CenterOfPolygon.Z - Item3.Z;*/
+
 
 	ScaleDistance = FVector::Dist(ReferencePoint1, ReferencePoint2);//ReferencePoint1 - ReferencePoint2;
 
@@ -175,38 +171,39 @@ void AJsonParser::CalculateNewPositions()
 	temp.Z = CenterOfPolygon.Y;*/
 
 
-	FQuat BetweenQuat = FQuat::FindBetweenVectors(ReferencePoint1, CenterOfPolygon);//NewReferencePoint1);
+	FQuat BetweenQuat = FQuat::FindBetweenVectors(CenterOfPolygon, ReferencePoint1);//NewReferencePoint1);
 	float Ref1Angle = 0.0f;
 	FVector RotationAxisRef1;
 	BetweenQuat.ToAxisAndAngle(RotationAxisRef1, Ref1Angle);
 	//FRotator rot = FRotator::vec
 	RotationAxisRef1.Normalize();
-
-	FQuat BetweenQuat2 = FQuat::FindBetweenVectors(ReferencePoint2, CenterOfPolygon);
+	
+	FQuat BetweenQuat2 = FQuat::FindBetweenVectors(CenterOfPolygon, ReferencePoint2);
 	float Ref2Angle = 0.0f;
 	FVector RotationAxisRef2;
 	BetweenQuat2.ToAxisAndAngle(RotationAxisRef2, Ref2Angle);
 
-	FQuat BetweenQuatItem1 = FQuat::FindBetweenVectors(Item1, CenterOfPolygon);
+	FQuat BetweenQuatItem1 = FQuat::FindBetweenVectors(CenterOfPolygon, Item1);
 	float Item1Angle = 0.0f;
 	FVector RotationAxisItem1;
 	BetweenQuat2.ToAxisAndAngle(RotationAxisItem1, Item1Angle);
 
-	FQuat BetweenQuatItem2 = FQuat::FindBetweenVectors(Item2, CenterOfPolygon);
+	FQuat BetweenQuatItem2 = FQuat::FindBetweenVectors(CenterOfPolygon, Item2);
 	float Item2Angle = 0.0f;
 	FVector RotationAxisItem2;
 	BetweenQuat2.ToAxisAndAngle(RotationAxisItem2, Item2Angle);
 
-	FQuat BetweenItem3 = FQuat::FindBetweenVectors(Item3, CenterOfPolygon);
+	FQuat BetweenItem3 = FQuat::FindBetweenVectors(CenterOfPolygon, Item3);
 	float Item3Angle = 0.0f;
 	FVector RotationAxisItem3;
 	BetweenQuat2.ToAxisAndAngle(RotationAxisItem3, Item3Angle);
 
-	FQuat BetweenNewRefP = FQuat::FindBetweenVectors(NewReferencePoint1, CenterOfPolygon);
+	FQuat BetweenNewRefP = FQuat::FindBetweenVectors(CenterOfPolygon, NewReferencePoint1);
 	float NewRefPAngle = 0.0f;
 	FVector RotationAxisNewRefP;
 	BetweenQuat2.ToAxisAndAngle(RotationAxisNewRefP, NewRefPAngle);
-	FQuat BetweenNewRefP2 = FQuat::FindBetweenVectors(NewReferencePoint2, CenterOfPolygon);
+
+	FQuat BetweenNewRefP2 = FQuat::FindBetweenVectors(CenterOfPolygon, NewReferencePoint2);
 	float NewRef2PAngle = 0.0f;
 	FVector RotationAxisNewRefP2;
 	BetweenQuat2.ToAxisAndAngle(RotationAxisNewRefP2, NewRef2PAngle);
@@ -230,20 +227,44 @@ void AJsonParser::CalculateNewPositions()
 	FVector temp2 = Item2 * FMath::Cos(FMath::RadiansToDegrees(NewRefPAngle));
 	FVector temp3 = Item3 * FMath::Cos(FMath::RadiansToDegrees(NewRefPAngle));*/
 	//https://math.stackexchange.com/questions/1917449/rotate-polygon-around-center-and-get-the-coordinates/1917485
-	FVector temp1 = Item1 - CenterOfPolygon;
-	FVector temp2 = Item2 - CenterOfPolygon;
-	FVector temp3 = Item3 - CenterOfPolygon;
-
-	NewItem1 = (RotationAxisNewRefP * temp1) + CenterOfPolygon;
-	NewItem2 = (RotationAxisNewRefP2 * temp2) + CenterOfPolygon;
-	NewItem3 = (RotationAxisNewRefP * temp3) + CenterOfPolygon;
+	float NewScaleDistance = FVector::Dist(NewReferencePoint1, NewReferencePoint2);
+	{
+		UE_LOG(LogTemp, Warning, TEXT("The Scale Value is: %f"), NewScaleDistance-ScaleDistance);
+	}
 
 
-	/*FQuat pitchQuat(RotationAxisRef1, Angle);
-	BetweenQuat *= pitchQuat;
-	BetweenQuat.Normalize();
-	BetweenQuat.ToAxisAndAngle(RotationAxisRef1, Angle);*/
 
+	UE_LOG(LogTemp, Warning, TEXT("The Rotation Axis vector: %f , %f , %f"),
+		RotationAxisNewRefP.X, RotationAxisNewRefP.Y, RotationAxisNewRefP.Z);
+
+	UE_LOG(LogTemp, Warning, TEXT("The diference angle from new and old position: %f"), FMath::RadiansToDegrees(NewRefPAngle) - FMath::RadiansToDegrees(Ref1Angle));
+
+	//UE_LOG(LogTemp, Warning, TEXT("The Matrix is: %s"), );
+	FString tet = BetweenQuat.ToString();
+
+	/*
+	*  ------------- Z-Axis --------------------
+	x*cosTheta - y*sinTheta = x'
+	x*sinTheta + y*cosTheta = y'
+	z = z'
+	 --------------- Y-Axis ---------------------
+	x*cosTheta + z*sinTheta = x'
+	y = y'
+	-x*sinTheta + z*cosTheta
+	 --------------- X-Axis ---------------------
+	x = x'
+	y*cosTheta - z*cosTheta = y'
+	y*sinTheta - z*cosTheta = z'
+	*/
+	CalculatePositions(RotationAxisNewRefP, NewRefPAngle);
+	
+
+	/*NewItem3 = -(Item3 * FMath::Cos(NewRefPAngle)) + (FVector::CrossProduct(NewReferencePoint1, Item3) * FMath::Sin(NewRefPAngle)) +
+		(NewReferencePoint1 * FVector::DotProduct(NewReferencePoint1, Item3)) * (1 - FMath::Cos(NewRefPAngle));*/
+
+	/*NewItem3.X =  
+	NewItem3.Y =  
+	NewItem3.Z =  */
 
 
 	UE_LOG(LogTemp, Warning, TEXT("The Center Polygon vector: %f , %f , %f"),
@@ -275,6 +296,7 @@ void AJsonParser::CalculateNewPositions()
 	DrawDebugSphere(world, NewItem1 * 100, 10, 32, FColor::Red, false, 100.0f);
 	DrawDebugSphere(world, NewItem2 * 100, 10, 32, FColor::Green, false, 100.0f);
 	DrawDebugSphere(world, NewItem3 * 100, 10, 32, FColor::Blue, false, 100.0f);
+	DrawDebugSphere(world, CenterOfPolygon * 100, 10, 32, FColor::Black, false, 30.0f);
 
 
 
@@ -315,41 +337,99 @@ void AJsonParser::SpawnBalls(FVector referencePoint1, FVector referencePoint2, F
 	DrawDebugSphere(world, item1 * 100, 10, 32, FColor::Red, false, 30.0f);
 	DrawDebugSphere(world, item2 * 100, 10, 32, FColor::Green, false, 30.0f);
 	DrawDebugSphere(world, item3 * 100, 10, 32, FColor::Blue, false, 30.0f);
+	
 
 
 }
-FVector2D AJsonParser::CalculateCenterOfPolygon(const TArray<FVector2D> verticies, int vertexCount)
+FVector AJsonParser::CalculateCenterOfPolygon(const TArray<FVector> verticies, int vertexCount)
 {
-	FVector2D centroid = { 0, 0 };
-	double signedArea = 0.0;
-	double x0 = 0.0; // Current vertex X
-	double y0 = 0.0; // Current vertex Y
-	double x1 = 0.0; // Next vertex X
-	double y1 = 0.0; // Next vertex Y
-	double a = 0.0;  // Partial signed area
+	/*
+	 https://stackoverflow.com/questions/22465832/center-point-calculation-for-3d-polygon
+	 https://math.stackexchange.com/questions/458293/find-the-centroid-of-a-3d-polygon
+	 https://stackoverflow.com/questions/44356447/finding-the-centroid-of-a-polygon
+	*/
 
-	// For all vertices
-	int i = 0;
-	for (i = 0; i < vertexCount; ++i)
+	FVector centroid, s;
+	FVector p1 = verticies[0];
+	FVector p2 = verticies[1];
+	float totalArea = 0.0;
+	for (int i = 2; i < verticies.Num(); i++)
 	{
-		// Z is up in Unreal Engine ...
-		x0 = verticies[i].X;
-		y0 = verticies[i].Y;
-		x1 = verticies[(i + 1) % vertexCount].X;
-		y1 = verticies[(i + 1) % vertexCount].Y;
-		a = x0 * y1 - x1 * y0;
-		signedArea += a;
-		centroid.X += (x0 + x1) * a;
-		centroid.Y += (y0 + y1) * a;
-	}
+		FVector p3 = verticies[i];
+		FVector edge1 = p3 - p1;
+		FVector edge2 = p3 - p2;
+		FVector crossProduct = FVector::CrossProduct(edge1, edge2);
+		float area = crossProduct.Size() / 2;
+		s.X += area * ((p1.X + p2.X + p3.X) / 3);
+		s.Y += area * ((p1.Y + p2.Y + p3.Y) / 3);
+		s.Z += area * ((p1.Z + p2.Z + p3.Z) / 3);
 
-	signedArea *= 0.5;
-	centroid.X /= (6.0 * signedArea);
-	centroid.Y /= (6.0 * signedArea);
+		totalArea += area;
+		p2 = p3;
+	}
+	centroid.X = s.X / totalArea;
+	centroid.Y = s.Y / totalArea;
+	centroid.Z = s.Z / totalArea;
 
 	return centroid;
+	
 }
-//FMatrix::
+void AJsonParser::CalculatePositions(FVector RotationAxis, float Angle)
+{
+	/*
+	*  ------------- Z-Axis --------------------
+	x*cosTheta - y*sinTheta = x'
+	x*sinTheta + y*cosTheta = y'
+	z = z'
+	 --------------- Y-Axis ---------------------
+	x*cosTheta + z*sinTheta = x'
+	y = y'
+	-x*sinTheta + z*cosTheta = z
+	 --------------- X-Axis ---------------------
+	x = x'
+	y*cosTheta - z*cosTheta = y'
+	y*sinTheta - z*cosTheta = z'
+	*/
+	if (RotationAxis.X != 0.f)
+	{
+		NewItem1.X = Item1.X;
+		NewItem1.Y = (Item1.Z * FMath::Cos(Angle)) - (Item1.Y * FMath::Cos(Angle));
+		NewItem1.Z = (Item1.Z * FMath::Sin(Angle)) - (Item1.Y * FMath::Cos(Angle));
+		NewItem2.X = Item2.X;
+		NewItem2.Y = (Item2.Z * FMath::Cos(Angle)) - (Item2.Y * FMath::Cos(Angle));
+		NewItem2.Z = (Item2.Z * FMath::Sin(Angle)) - (Item2.Y * FMath::Cos(Angle));
+		NewItem3.X = Item3.X;
+		NewItem3.Y = (Item3.Z * FMath::Cos(Angle)) - (Item3.Y * FMath::Cos(Angle));
+		NewItem3.Z = (Item3.Z * FMath::Sin(Angle)) - (Item3.Y * FMath::Cos(Angle));
+	}
+	if (RotationAxis.Y != 0.f)
+	{
+		// Y is z axis in ue4
+		NewItem1.X = (Item1.X * FMath::Cos(Angle)) - (Item1.Z * FMath::Sin(Angle));
+		NewItem1.Y = Item1.Y; // this is Z
+		NewItem1.Z = (Item1.X * FMath::Sin(Angle)) + (Item1.Z * FMath::Sin(Angle));
+		NewItem2.X = (Item2.X * FMath::Cos(Angle)) - (Item2.Z * FMath::Sin(Angle));
+		NewItem2.Y = Item2.Y; // this is Z
+		NewItem2.Z = (Item2.X * FMath::Sin(Angle)) + (Item2.Z * FMath::Sin(Angle));
+		NewItem3.X = (Item3.X * FMath::Cos(Angle)) - (Item3.Z * FMath::Sin(Angle));
+		NewItem3.Y = Item3.Y; // this is Z
+		NewItem3.Z = (Item3.X * FMath::Sin(Angle)) + (Item3.Z * FMath::Sin(Angle));
+	}
+	if (RotationAxis.Z != 0.f)
+	{
+		// Z is Y axis in ue4
+		NewItem1.X = (Item1.X * FMath::Cos(Angle)) + (Item1.Y * FMath::Sin(Angle));
+		NewItem1.Y = (-Item1.X * FMath::Sin(Angle)) + (Item1.Y * FMath::Cos(Angle));
+		NewItem1.Z = Item1.Z;// this is Y axis 
+		NewItem2.X = (Item2.X * FMath::Cos(Angle)) + (Item2.Y * FMath::Sin(Angle));
+		NewItem2.Y = (-Item2.X * FMath::Sin(Angle)) + (Item2.Y * FMath::Cos(Angle));
+		NewItem2.Z = Item2.Z;// this is Y axis
+		NewItem3.X = (Item3.X * FMath::Cos(Angle)) + (Item3.Y * FMath::Sin(Angle));
+		NewItem3.Y = (-Item3.X * FMath::Sin(Angle)) + (Item3.Y * FMath::Cos(Angle));
+		NewItem3.Z = Item3.Z;// this is Y axis
+	}
+
+}
 	/*
 		[1,0,0,0]
 		[0,1,0,0]
