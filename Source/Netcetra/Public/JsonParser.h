@@ -127,14 +127,8 @@ public:
 	float DistanceItem1ToCenter;
 	float DistanceItem2ToCenter;
 	float DistanceItem3ToCenter;
-
-	FVector DiferenceItem1FromRef1;
-	FVector DiferenceItem2FromRef1;
-	FVector DiferenceItem3FromRef1;
-	
-	FVector DiferenceItem1FromRef2;
-	FVector DiferenceItem2FromRef2;
-	FVector DiferenceItem3FromRef2;
+	float DistanceRef1ToCenter;
+	float DistanceRef2ToCenter;
 
 	FVector NewItem1;
 	FVector NewItem2;
@@ -164,5 +158,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void CalculatePositions(FVector RotationAxis, float Angle);
+
+	UFUNCTION(BlueprintCallable)
+	FVector CalculateZRotation(float Angle);
+	UFUNCTION(BlueprintCallable)
+	FVector CalculateYRotation(float Angle);
+	UFUNCTION(BlueprintCallable)
+	FVector CalculateXRotation( float Angle);
 
 };
